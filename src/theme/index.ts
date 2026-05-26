@@ -50,6 +50,24 @@ export const COULEURS = {
   borderLight: '#F3F4F6',
 };
 
+/** Palette selon Paramètres → mode sombre (utilisée par ThemeProvider). */
+export function getThemeColors(modeSombre: boolean): typeof COULEURS {
+  if (!modeSombre) return COULEURS;
+  return {
+    ...COULEURS,
+    background: COULEURS.dark.background,
+    card: COULEURS.dark.card,
+    surface: COULEURS.dark.surface,
+    text: COULEURS.dark.text,
+    textSecondary: '#B8B0E8',
+    textLight: '#8B85A8',
+    border: '#352F55',
+    borderLight: '#2A2540',
+  };
+}
+
+export type ThemeColors = ReturnType<typeof getThemeColors>;
+
 export const SPACING = {
   xs: 4,
   sm: 8,

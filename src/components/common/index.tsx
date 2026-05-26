@@ -13,7 +13,8 @@ import {
   ViewStyle,
   TextStyle,
 } from 'react-native';
-import { COULEURS, SPACING, BORDER_RADIUS, FONT_SIZE, FONT_WEIGHT, SHADOWS } from '../../theme';
+import { SPACING, BORDER_RADIUS, FONT_SIZE, FONT_WEIGHT, SHADOWS } from '../../theme';
+import { useThemeColors } from '../../theme/ThemeContext';
 import { Pupitre } from '../../types';
 import { PUPITRE_CONFIG } from '../../theme';
 
@@ -40,12 +41,13 @@ export function Bouton({
   desactive,
   style,
 }: BoutonProps) {
+  const C = useThemeColors();
   const stylesVariante = {
-    primary: { bg: COULEURS.primary, text: COULEURS.white, border: COULEURS.primary },
-    secondary: { bg: COULEURS.secondary, text: COULEURS.white, border: COULEURS.secondary },
-    outline: { bg: 'transparent', text: COULEURS.primary, border: COULEURS.primary },
-    danger: { bg: COULEURS.error, text: COULEURS.white, border: COULEURS.error },
-    ghost: { bg: 'transparent', text: COULEURS.primary, border: 'transparent' },
+    primary: { bg: C.primary, text: C.white, border: C.primary },
+    secondary: { bg: C.secondary, text: C.white, border: C.secondary },
+    outline: { bg: 'transparent', text: C.primary, border: C.primary },
+    danger: { bg: C.error, text: C.white, border: C.error },
+    ghost: { bg: 'transparent', text: C.primary, border: 'transparent' },
   }[variante];
 
   const tailleConfig = {
@@ -139,9 +141,10 @@ interface CarteProps {
 }
 
 export function Carte({ children, style, onPress, elevation = 'sm' }: CarteProps) {
+  const C = useThemeColors();
   const ombre = elevation === 'none' ? {} : SHADOWS[elevation];
   const contenu = (
-    <View style={[stylesCarte.base, ombre, style]}>{children}</View>
+    <View style={[stylesCarte.base, { backgroundColor: C.card }, ombre, style]}>{children}</View>
   );
 
   if (onPress) {
@@ -156,7 +159,6 @@ export function Carte({ children, style, onPress, elevation = 'sm' }: CarteProps
 
 const stylesCarte = StyleSheet.create({
   base: {
-    backgroundColor: COULEURS.card,
     borderRadius: BORDER_RADIUS.lg,
     padding: SPACING.md,
   },
@@ -173,15 +175,17 @@ interface CarteStatProps {
   style?: ViewStyle;
 }
 
-export function CarteStat({ label, valeur, sousTitre, couleur = COULEURS.primary, icone, style }: CarteStatProps) {
+export function CarteStat({ label, valeur, sousTitre, couleur, icone, style }: CarteStatProps) {
+  const C = useThemeColors();
+  const couleurAccent = couleur ?? C.primary;
   return (
     <Carte style={[stylesStat.base, style]}>
-      <View style={[stylesStat.iconeCont, { backgroundColor: couleur + '15' }]}>
-        {icone ?? <View style={[stylesStat.dot, { backgroundColor: couleur }]} />}
+      <View style={[stylesStat.iconeCont, { backgroundColor: couleurAccent + '15' }]}>
+        {icone ?? <View style={[stylesStat.dot, { backgroundColor: couleurAccent }]} />}
       </View>
-      <Text style={[stylesStat.valeur, { color: couleur }]}>{valeur}</Text>
-      <Text style={stylesStat.label}>{label}</Text>
-      {sousTitre && <Text style={stylesStat.sousTitre}>{sousTitre}</Text>}
+      <Text style={[stylesStat.valeur, { color: couleurAccent }]}>{valeur}</Text>
+      <Text style={[stylesStat.label, { color: C.textSecondary }]}>{label}</Text>
+      {sousTitre && <Text style={[stylesStat.sousTitre, { color: C.textLight }]}>{sousTitre}</Text>}
     </Carte>
   );
 }
@@ -191,8 +195,8 @@ const stylesStat = StyleSheet.create({
   iconeCont: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
   dot: { width: 20, height: 20, borderRadius: 10 },
   valeur: { fontSize: FONT_SIZE.xxxl, fontWeight: FONT_WEIGHT.black, lineHeight: 36 },
-  label: { fontSize: FONT_SIZE.sm, color: COULEURS.textSecondary, fontWeight: FONT_WEIGHT.medium, textAlign: 'center', marginTop: 2 },
-  sousTitre: { fontSize: FONT_SIZE.xs, color: COULEURS.textLight, marginTop: 2 },
+  label: { fontSize: FONT_SIZE.sm, fontWeight: FONT_WEIGHT.medium, textAlign: 'center', marginTop: 2 },
+  sousTitre: { fontSize: FONT_SIZE.xs, marginTop: 2 },
 });
 
 // ─── AVATAR MEMBRE ──────────────────────────────────────────
@@ -231,16 +235,19 @@ interface TogglePresenceProps {
 }
 
 export function TogglePresence({ present, onToggle }: TogglePresenceProps) {
+  const C = useThemeColors();
   return (
     <TouchableOpacity
       onPress={onToggle}
       activeOpacity={0.8}
       style={[
         stylesToggle.base,
-        present ? stylesToggle.present : stylesToggle.absent,
+        present
+          ? { backgroundColor: C.success + '15', borderColor: C.success }
+          : { backgroundColor: C.error + '10', borderColor: C.border },
       ]}
     >
-      <Text style={[stylesToggle.texte, { color: present ? COULEURS.success : COULEURS.textLight }]}>
+      <Text style={[stylesToggle.texte, { color: present ? C.success : C.textLight }]}>
         {present ? '✓' : '✗'}
       </Text>
     </TouchableOpacity>
@@ -256,14 +263,6 @@ const stylesToggle = StyleSheet.create({
     justifyContent: 'center',
     borderWidth: 2,
   },
-  present: {
-    backgroundColor: COULEURS.success + '15',
-    borderColor: COULEURS.success,
-  },
-  absent: {
-    backgroundColor: COULEURS.error + '10',
-    borderColor: COULEURS.border,
-  },
   texte: {
     fontSize: 18,
     fontWeight: FONT_WEIGHT.bold,
@@ -278,23 +277,25 @@ interface BarreTauxProps {
 }
 
 export function BarreTaux({ taux, hauteur = 8 }: BarreTauxProps) {
-  const couleur = taux >= 80 ? COULEURS.success : taux >= 60 ? COULEURS.warning : COULEURS.error;
+  const C = useThemeColors();
+  const couleur = taux >= 80 ? C.success : taux >= 60 ? C.warning : C.error;
   return (
-    <View style={[stylesBarreTaux.fond, { height: hauteur }]}>
+    <View style={[stylesBarreTaux.fond, { height: hauteur, backgroundColor: C.border }]}>
       <View style={[stylesBarreTaux.remplissage, { width: `${taux}%`, backgroundColor: couleur }]} />
     </View>
   );
 }
 
 const stylesBarreTaux = StyleSheet.create({
-  fond: { backgroundColor: COULEURS.border, borderRadius: 99, overflow: 'hidden', flex: 1 },
+  fond: { borderRadius: 99, overflow: 'hidden', flex: 1 },
   remplissage: { height: '100%', borderRadius: 99 },
 });
 
 // ─── SEPARATEUR ─────────────────────────────────────────────
 
 export function Separateur({ style }: { style?: ViewStyle }) {
-  return <View style={[{ height: 1, backgroundColor: COULEURS.borderLight }, style]} />;
+  const C = useThemeColors();
+  return <View style={[{ height: 1, backgroundColor: C.borderLight }, style]} />;
 }
 
 // ─── ÉTAT VIDE ──────────────────────────────────────────────
@@ -307,11 +308,12 @@ interface EtatVideProps {
 }
 
 export function EtatVide({ message, sousTitre, icone = '🎵', action }: EtatVideProps) {
+  const C = useThemeColors();
   return (
     <View style={stylesVide.base}>
       <Text style={stylesVide.icone}>{icone}</Text>
-      <Text style={stylesVide.message}>{message}</Text>
-      {sousTitre && <Text style={stylesVide.sousTitre}>{sousTitre}</Text>}
+      <Text style={[stylesVide.message, { color: C.text }]}>{message}</Text>
+      {sousTitre && <Text style={[stylesVide.sousTitre, { color: C.textSecondary }]}>{sousTitre}</Text>}
       {action && (
         <Bouton
           label={action.label}
@@ -326,7 +328,7 @@ export function EtatVide({ message, sousTitre, icone = '🎵', action }: EtatVid
 const stylesVide = StyleSheet.create({
   base: { alignItems: 'center', justifyContent: 'center', flex: 1, padding: SPACING.xl },
   icone: { fontSize: 56, marginBottom: SPACING.md },
-  message: { fontSize: FONT_SIZE.lg, fontWeight: FONT_WEIGHT.semibold, color: COULEURS.text, textAlign: 'center' },
-  sousTitre: { fontSize: FONT_SIZE.md, color: COULEURS.textSecondary, textAlign: 'center', marginTop: SPACING.sm },
+  message: { fontSize: FONT_SIZE.lg, fontWeight: FONT_WEIGHT.semibold, textAlign: 'center' },
+  sousTitre: { fontSize: FONT_SIZE.md, textAlign: 'center', marginTop: SPACING.sm },
   bouton: { marginTop: SPACING.lg },
 });

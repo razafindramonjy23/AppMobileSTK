@@ -27,6 +27,8 @@ export interface Session {
   date: string; // YYYY-MM-DD
   titre?: string;
   note?: string;
+  /** Montant collecté le jour de la session (offrande), même unité que la saisie locale */
+  offrande?: number;
 }
 
 export interface MembreAvecPresence extends Membre {

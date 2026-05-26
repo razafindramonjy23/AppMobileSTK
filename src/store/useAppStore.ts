@@ -28,6 +28,8 @@ interface AppState {
   chargerSessions: () => void;
   selectionnerDate: (date: string) => void;
   ajouterSession: (date: string, titre?: string) => void;
+  /** Montant d'offrande lié à la session (date YYYY-MM-DD). */
+  setOffrandeSession: (date: string, offrande: number) => void;
   supprimerSession: (date: string) => void;
 
   // Actions présences
@@ -93,6 +95,11 @@ export const useAppStore = create<AppState>((set, get) => ({
     DB.initialiserPresencesSession(date);
     get().chargerSessions();
     get().chargerPresencesSession(date);
+  },
+
+  setOffrandeSession: (date, offrande) => {
+    DB.setOffrandeSession(date, offrande);
+    get().chargerSessions();
   },
 
   supprimerSession: (date) => {

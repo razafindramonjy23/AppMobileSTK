@@ -16,7 +16,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BarChart, PieChart } from 'react-native-chart-kit';
 import { useAppStore } from '../../store/useAppStore';
-import { COULEURS, SPACING, BORDER_RADIUS, FONT_SIZE, FONT_WEIGHT, SHADOWS, PUPITRE_CONFIG } from '../../theme';
+import { SPACING, BORDER_RADIUS, FONT_SIZE, FONT_WEIGHT, SHADOWS, PUPITRE_CONFIG, ThemeColors } from '../../theme';
+import { useThemeColors } from '../../theme/ThemeContext';
 import { CarteStat, Carte, EtatVide, BarreTaux } from '../../components/common';
 import * as DB from '../../database/database';
 import { exporterExcel } from '../../utils/export';
@@ -24,8 +25,57 @@ import { exporterExcel } from '../../utils/export';
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CHART_WIDTH = SCREEN_WIDTH - SPACING.md * 2;
 
+function createStatsStyles(C: ThemeColors) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: C.background },
+    scroll: { paddingBottom: SPACING.xxl },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: SPACING.md,
+      paddingTop: SPACING.md,
+      paddingBottom: SPACING.sm,
+    },
+    titre: { fontSize: FONT_SIZE.xxl, fontWeight: FONT_WEIGHT.black, color: C.text },
+    sousTitre: { fontSize: FONT_SIZE.sm, color: C.textSecondary, marginTop: 2 },
+    btnExport: {
+      backgroundColor: C.secondary,
+      paddingHorizontal: 14,
+      paddingVertical: 9,
+      borderRadius: BORDER_RADIUS.md,
+      ...SHADOWS.sm,
+    },
+    btnExportTxt: { color: C.white, fontWeight: FONT_WEIGHT.bold, fontSize: FONT_SIZE.sm },
+    statsGrid: { flexDirection: 'row', gap: SPACING.sm, paddingHorizontal: SPACING.md, marginBottom: SPACING.sm },
+    section: { marginHorizontal: SPACING.md, marginBottom: SPACING.md },
+    sectionTitre: { fontSize: FONT_SIZE.lg, fontWeight: FONT_WEIGHT.bold, color: C.text, marginBottom: SPACING.md },
+    chart: { borderRadius: BORDER_RADIUS.md, marginHorizontal: -8 },
+    legendePupitre: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.md, marginTop: SPACING.sm },
+    legendeItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+    legendeDot: { width: 10, height: 10, borderRadius: 5 },
+    legendeLabel: { fontSize: FONT_SIZE.sm, color: C.textSecondary },
+    legendeVal: { fontSize: FONT_SIZE.sm, fontWeight: FONT_WEIGHT.bold },
+    rowClassement: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+      paddingVertical: 8,
+      borderBottomWidth: 1,
+      borderBottomColor: C.borderLight,
+    },
+    rang: { width: 28, fontSize: FONT_SIZE.md, textAlign: 'center' },
+    nomClassement: { flex: 1, fontSize: FONT_SIZE.sm, fontWeight: FONT_WEIGHT.medium, color: C.text },
+    barreClassement: { width: 80 },
+    tauxClassement: { width: 36, fontSize: FONT_SIZE.sm, fontWeight: FONT_WEIGHT.bold, textAlign: 'right' },
+  });
+}
+
 export default function StatsScreen() {
   const { membres, chargerMembres, sessions, chargerSessions } = useAppStore();
+  const C = useThemeColors();
+  const modeSombre = useAppStore((s) => s.parametres.modeSombre);
+  const styles = useMemo(() => createStatsStyles(C), [C]);
   const [exportLoading, setExportLoading] = useState(false);
   const [annee] = useState(new Date().getFullYear());
 
@@ -40,32 +90,32 @@ export default function StatsScreen() {
     {
       name: 'Soprano',
       population: statsGlobales.membresPupitre.soprano,
-      color: COULEURS.soprano,
-      legendFontColor: COULEURS.text,
+      color: C.soprano,
+      legendFontColor: C.text,
       legendFontSize: 12,
     },
     {
       name: 'Alto',
       population: statsGlobales.membresPupitre.alto,
-      color: COULEURS.alto,
-      legendFontColor: COULEURS.text,
+      color: C.alto,
+      legendFontColor: C.text,
       legendFontSize: 12,
     },
     {
       name: 'Ténor',
       population: statsGlobales.membresPupitre.tenor,
-      color: COULEURS.tenor,
-      legendFontColor: COULEURS.text,
+      color: C.tenor,
+      legendFontColor: C.text,
       legendFontSize: 12,
     },
     {
       name: 'Basse',
       population: statsGlobales.membresPupitre.basse,
-      color: COULEURS.basse,
-      legendFontColor: COULEURS.text,
+      color: C.basse,
+      legendFontColor: C.text,
       legendFontSize: 12,
     },
-  ].filter((d) => d.population > 0), [statsGlobales]);
+  ].filter((d) => d.population > 0), [statsGlobales, C]);
 
   const donneesParMois = useMemo(() => {
     const donnees = DB.getPresencesParMois(annee);
@@ -93,19 +143,25 @@ export default function StatsScreen() {
     }
   }
 
-  const chartConfig = {
-    backgroundGradientFrom: COULEURS.card,
-    backgroundGradientTo: COULEURS.card,
-    color: (opacity = 1) => `rgba(108, 63, 197, ${opacity})`,
-    strokeWidth: 2,
-    barPercentage: 0.7,
-    labelColor: () => COULEURS.textSecondary,
-    style: { borderRadius: 16 },
-  };
+  const chartConfig = useMemo(
+    () => ({
+      backgroundGradientFrom: C.card,
+      backgroundGradientTo: C.card,
+      color: (opacity = 1) => `rgba(108, 63, 197, ${opacity})`,
+      strokeWidth: 2,
+      barPercentage: 0.7,
+      labelColor: () => C.textSecondary,
+      style: { borderRadius: 16 },
+    }),
+    [C]
+  );
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={COULEURS.background} />
+      <StatusBar
+        barStyle={modeSombre ? 'light-content' : 'dark-content'}
+        backgroundColor={C.background}
+      />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
 
         {/* En-tête */}
@@ -129,13 +185,13 @@ export default function StatsScreen() {
           <CarteStat
             label="Membres"
             valeur={statsGlobales.totalMembres}
-            couleur={COULEURS.primary}
+            couleur={C.primary}
             icone={<Text style={{ fontSize: 20 }}>👥</Text>}
           />
           <CarteStat
             label="Sessions"
             valeur={statsGlobales.totalSessions}
-            couleur={COULEURS.secondary}
+            couleur={C.secondary}
             icone={<Text style={{ fontSize: 20 }}>📅</Text>}
           />
         </View>
@@ -143,13 +199,13 @@ export default function StatsScreen() {
           <CarteStat
             label="Présences"
             valeur={statsGlobales.totalPresences}
-            couleur={COULEURS.success}
+            couleur={C.success}
             icone={<Text style={{ fontSize: 20 }}>✅</Text>}
           />
           <CarteStat
             label="Taux moyen"
             valeur={`${statsGlobales.tauxMoyenPresence}%`}
-            couleur={COULEURS.tenor}
+            couleur={C.tenor}
             icone={<Text style={{ fontSize: 20 }}>📈</Text>}
           />
         </View>
@@ -217,7 +273,7 @@ export default function StatsScreen() {
                 <View style={styles.barreClassement}>
                   <BarreTaux taux={m.tauxPresence} hauteur={6} />
                 </View>
-                <Text style={[styles.tauxClassement, { color: m.tauxPresence >= 80 ? COULEURS.success : m.tauxPresence >= 60 ? COULEURS.warning : COULEURS.error }]}>
+                <Text style={[styles.tauxClassement, { color: m.tauxPresence >= 80 ? C.success : m.tauxPresence >= 60 ? C.warning : C.error }]}>
                   {m.tauxPresence}%
                 </Text>
               </View>
@@ -236,44 +292,3 @@ export default function StatsScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COULEURS.background },
-  scroll: { paddingBottom: SPACING.xxl },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: SPACING.md,
-    paddingTop: SPACING.md,
-    paddingBottom: SPACING.sm,
-  },
-  titre: { fontSize: FONT_SIZE.xxl, fontWeight: FONT_WEIGHT.black, color: COULEURS.text },
-  sousTitre: { fontSize: FONT_SIZE.sm, color: COULEURS.textSecondary, marginTop: 2 },
-  btnExport: {
-    backgroundColor: COULEURS.secondary,
-    paddingHorizontal: 14,
-    paddingVertical: 9,
-    borderRadius: BORDER_RADIUS.md,
-    ...SHADOWS.sm,
-  },
-  btnExportTxt: { color: COULEURS.white, fontWeight: FONT_WEIGHT.bold, fontSize: FONT_SIZE.sm },
-
-  statsGrid: { flexDirection: 'row', gap: SPACING.sm, paddingHorizontal: SPACING.md, marginBottom: SPACING.sm },
-
-  section: { marginHorizontal: SPACING.md, marginBottom: SPACING.md },
-  sectionTitre: { fontSize: FONT_SIZE.lg, fontWeight: FONT_WEIGHT.bold, color: COULEURS.text, marginBottom: SPACING.md },
-  chart: { borderRadius: BORDER_RADIUS.md, marginHorizontal: -8 },
-
-  legendePupitre: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.md, marginTop: SPACING.sm },
-  legendeItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  legendeDot: { width: 10, height: 10, borderRadius: 5 },
-  legendeLabel: { fontSize: FONT_SIZE.sm, color: COULEURS.textSecondary },
-  legendeVal: { fontSize: FONT_SIZE.sm, fontWeight: FONT_WEIGHT.bold },
-
-  rowClassement: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: COULEURS.borderLight },
-  rang: { width: 28, fontSize: FONT_SIZE.md, textAlign: 'center' },
-  nomClassement: { flex: 1, fontSize: FONT_SIZE.sm, fontWeight: FONT_WEIGHT.medium, color: COULEURS.text },
-  barreClassement: { width: 80 },
-  tauxClassement: { width: 36, fontSize: FONT_SIZE.sm, fontWeight: FONT_WEIGHT.bold, textAlign: 'right' },
-});

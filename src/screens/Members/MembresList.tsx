@@ -17,15 +17,100 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { useAppStore } from '../../store/useAppStore';
 import { Membre, Pupitre } from '../../types';
-import { COULEURS, SPACING, BORDER_RADIUS, FONT_SIZE, FONT_WEIGHT, SHADOWS, PUPITRE_CONFIG } from '../../theme';
+import {
+  SPACING, BORDER_RADIUS, FONT_SIZE, FONT_WEIGHT, SHADOWS, PUPITRE_CONFIG, ThemeColors,
+} from '../../theme';
+import { useThemeColors } from '../../theme/ThemeContext';
 import { AvatarMembre, BadgePupitre, Carte, EtatVide, BarreTaux } from '../../components/common';
 import * as DB from '../../database/database';
 
 const PUPITRES: (Pupitre | 'tous')[] = ['tous', 'soprano', 'alto', 'tenor', 'basse'];
 
+function createMembresListStyles(C: ThemeColors) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: C.background },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: SPACING.md,
+      paddingTop: SPACING.md,
+      paddingBottom: SPACING.sm,
+    },
+    titre: { fontSize: FONT_SIZE.xxl, fontWeight: FONT_WEIGHT.black, color: C.text },
+    sousTitre: { fontSize: FONT_SIZE.sm, color: C.textSecondary, marginTop: 2 },
+    btnAjouter: {
+      backgroundColor: C.primary,
+      paddingHorizontal: SPACING.md,
+      paddingVertical: 10,
+      borderRadius: BORDER_RADIUS.md,
+      ...SHADOWS.sm,
+    },
+    btnAjouterTxt: { color: C.white, fontWeight: FONT_WEIGHT.semibold, fontSize: FONT_SIZE.md },
+    searchBar: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: C.card,
+      marginHorizontal: SPACING.md,
+      marginBottom: SPACING.sm,
+      borderRadius: BORDER_RADIUS.md,
+      paddingHorizontal: SPACING.md,
+      ...SHADOWS.sm,
+    },
+    searchIcone: { fontSize: 16, marginRight: 8 },
+    searchInput: { flex: 1, paddingVertical: 12, fontSize: FONT_SIZE.md, color: C.text },
+    clearBtn: { fontSize: 16, color: C.textLight, padding: 4 },
+    filtres: {
+      flexDirection: 'row',
+      paddingHorizontal: SPACING.md,
+      gap: 8,
+      marginBottom: SPACING.sm,
+      flexWrap: 'wrap',
+    },
+    chip: {
+      paddingHorizontal: 14,
+      paddingVertical: 6,
+      borderRadius: BORDER_RADIUS.full,
+      borderWidth: 1.5,
+      borderColor: C.border,
+      backgroundColor: C.card,
+    },
+    chipTxt: { fontSize: FONT_SIZE.sm, fontWeight: FONT_WEIGHT.medium, color: C.textSecondary },
+    liste: { paddingHorizontal: SPACING.md, paddingBottom: SPACING.xl, gap: SPACING.sm },
+    carteM: { padding: SPACING.md },
+    rangeeM: { flexDirection: 'row', gap: SPACING.md, alignItems: 'center' },
+    infoM: { flex: 1, gap: 4 },
+    nomM: { fontSize: FONT_SIZE.md, fontWeight: FONT_WEIGHT.bold, color: C.text },
+    telM: { fontSize: FONT_SIZE.xs, color: C.textSecondary, marginTop: 2 },
+    statsM: { alignItems: 'flex-end', gap: 4, width: 70 },
+    tauxM: { fontSize: FONT_SIZE.lg, fontWeight: FONT_WEIGHT.bold, color: C.primary },
+    presM: { fontSize: FONT_SIZE.xs, color: C.textSecondary },
+    actionsM: {
+      flexDirection: 'row',
+      gap: SPACING.sm,
+      marginTop: SPACING.sm,
+      paddingTop: SPACING.sm,
+      borderTopWidth: 1,
+      borderTopColor: C.borderLight,
+    },
+    btnAction: {
+      flex: 1,
+      paddingVertical: 6,
+      alignItems: 'center',
+      borderRadius: BORDER_RADIUS.sm,
+      backgroundColor: C.surface,
+    },
+    btnDanger: { backgroundColor: C.error + '10' },
+    btnActionTxt: { fontSize: FONT_SIZE.sm, fontWeight: FONT_WEIGHT.medium, color: C.primary },
+  });
+}
+
 export default function MembresList() {
   const navigation = useNavigation<any>();
   const { membres, chargerMembres, supprimerMembre } = useAppStore();
+  const C = useThemeColors();
+  const modeSombre = useAppStore((s) => s.parametres.modeSombre);
+  const styles = useMemo(() => createMembresListStyles(C), [C]);
   const [recherche, setRecherche] = useState('');
   const [filtreActif, setFiltreActif] = useState<Pupitre | 'tous'>('tous');
 
@@ -102,16 +187,19 @@ export default function MembresList() {
             style={[styles.btnAction, styles.btnDanger]}
             onPress={() => confirmerSuppression(item)}
           >
-            <Text style={[styles.btnActionTxt, { color: COULEURS.error }]}>🗑️ Supprimer</Text>
+            <Text style={[styles.btnActionTxt, { color: C.error }]}>🗑️ Supprimer</Text>
           </TouchableOpacity>
         </View>
       </Carte>
     );
-  }, [navigation, confirmerSuppression]);
+  }, [navigation, confirmerSuppression, styles, C]);
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={COULEURS.background} />
+      <StatusBar
+        barStyle={modeSombre ? 'light-content' : 'dark-content'}
+        backgroundColor={C.background}
+      />
 
       {/* En-tête */}
       <View style={styles.header}>
@@ -134,7 +222,7 @@ export default function MembresList() {
         <TextInput
           style={styles.searchInput}
           placeholder="Rechercher un membre..."
-          placeholderTextColor={COULEURS.textLight}
+          placeholderTextColor={C.textLight}
           value={recherche}
           onChangeText={setRecherche}
         />
@@ -149,7 +237,7 @@ export default function MembresList() {
       <View style={styles.filtres}>
         {PUPITRES.map((p) => {
           const actif = filtreActif === p;
-          const couleur = p === 'tous' ? COULEURS.primary : PUPITRE_CONFIG[p].couleur;
+          const couleur = p === 'tous' ? C.primary : PUPITRE_CONFIG[p].couleur;
           return (
             <TouchableOpacity
               key={p}
@@ -157,7 +245,7 @@ export default function MembresList() {
               onPress={() => setFiltreActif(p)}
               activeOpacity={0.8}
             >
-              <Text style={[styles.chipTxt, actif && { color: COULEURS.white }]}>
+              <Text style={[styles.chipTxt, actif && { color: C.white }]}>
                 {p === 'tous' ? 'Tous' : PUPITRE_CONFIG[p].label}
               </Text>
             </TouchableOpacity>
@@ -184,85 +272,3 @@ export default function MembresList() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COULEURS.background },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: SPACING.md,
-    paddingTop: SPACING.md,
-    paddingBottom: SPACING.sm,
-  },
-  titre: { fontSize: FONT_SIZE.xxl, fontWeight: FONT_WEIGHT.black, color: COULEURS.text },
-  sousTitre: { fontSize: FONT_SIZE.sm, color: COULEURS.textSecondary, marginTop: 2 },
-  btnAjouter: {
-    backgroundColor: COULEURS.primary,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: 10,
-    borderRadius: BORDER_RADIUS.md,
-    ...SHADOWS.sm,
-  },
-  btnAjouterTxt: { color: COULEURS.white, fontWeight: FONT_WEIGHT.semibold, fontSize: FONT_SIZE.md },
-
-  searchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: COULEURS.card,
-    marginHorizontal: SPACING.md,
-    marginBottom: SPACING.sm,
-    borderRadius: BORDER_RADIUS.md,
-    paddingHorizontal: SPACING.md,
-    ...SHADOWS.sm,
-  },
-  searchIcone: { fontSize: 16, marginRight: 8 },
-  searchInput: { flex: 1, paddingVertical: 12, fontSize: FONT_SIZE.md, color: COULEURS.text },
-  clearBtn: { fontSize: 16, color: COULEURS.textLight, padding: 4 },
-
-  filtres: {
-    flexDirection: 'row',
-    paddingHorizontal: SPACING.md,
-    gap: 8,
-    marginBottom: SPACING.sm,
-    flexWrap: 'wrap',
-  },
-  chip: {
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: BORDER_RADIUS.full,
-    borderWidth: 1.5,
-    borderColor: COULEURS.border,
-    backgroundColor: COULEURS.card,
-  },
-  chipTxt: { fontSize: FONT_SIZE.sm, fontWeight: FONT_WEIGHT.medium, color: COULEURS.textSecondary },
-
-  liste: { paddingHorizontal: SPACING.md, paddingBottom: SPACING.xl, gap: SPACING.sm },
-
-  carteM: { padding: SPACING.md },
-  rangeeM: { flexDirection: 'row', gap: SPACING.md, alignItems: 'center' },
-  infoM: { flex: 1, gap: 4 },
-  nomM: { fontSize: FONT_SIZE.md, fontWeight: FONT_WEIGHT.bold, color: COULEURS.text },
-  telM: { fontSize: FONT_SIZE.xs, color: COULEURS.textSecondary, marginTop: 2 },
-  statsM: { alignItems: 'flex-end', gap: 4, width: 70 },
-  tauxM: { fontSize: FONT_SIZE.lg, fontWeight: FONT_WEIGHT.bold, color: COULEURS.primary },
-  presM: { fontSize: FONT_SIZE.xs, color: COULEURS.textSecondary },
-
-  actionsM: {
-    flexDirection: 'row',
-    gap: SPACING.sm,
-    marginTop: SPACING.sm,
-    paddingTop: SPACING.sm,
-    borderTopWidth: 1,
-    borderTopColor: COULEURS.borderLight,
-  },
-  btnAction: {
-    flex: 1,
-    paddingVertical: 6,
-    alignItems: 'center',
-    borderRadius: BORDER_RADIUS.sm,
-    backgroundColor: COULEURS.surface,
-  },
-  btnDanger: { backgroundColor: COULEURS.error + '10' },
-  btnActionTxt: { fontSize: FONT_SIZE.sm, fontWeight: FONT_WEIGHT.medium, color: COULEURS.primary },
-});

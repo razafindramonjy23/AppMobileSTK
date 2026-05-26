@@ -17,6 +17,7 @@ import { initDatabase } from './src/database/database';
 import { useAppStore } from './src/store/useAppStore';
 import AppNavigation from './src/navigation/AppNavigation';
 import { COULEURS, FONT_SIZE, FONT_WEIGHT } from './src/theme';
+import { ThemeProvider } from './src/theme/ThemeContext';
 
 // Empêcher le splash screen de disparaître automatiquement
 SplashScreen.preventAutoHideAsync();
@@ -69,8 +70,10 @@ export default function App() {
 
   return (
     <SafeAreaProvider onLayout={onLayoutRootView}>
-      <StatusBar style="dark" />
-      <AppNavigation />
+      <ThemeProvider>
+        <StatusBar style={parametres.modeSombre ? 'light' : 'dark'} />
+        <AppNavigation />
+      </ThemeProvider>
     </SafeAreaProvider>
   );
 }

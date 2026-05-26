@@ -2,7 +2,7 @@
 // ÉCRAN : PARAMÈTRES
 // ============================================================
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -18,7 +18,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import { useAppStore } from '../../store/useAppStore';
-import { COULEURS, SPACING, BORDER_RADIUS, FONT_SIZE, FONT_WEIGHT, SHADOWS } from '../../theme';
+import { SPACING, BORDER_RADIUS, FONT_SIZE, FONT_WEIGHT, ThemeColors } from '../../theme';
+import { useThemeColors } from '../../theme/ThemeContext';
 import { Bouton, Carte } from '../../components/common';
 import { exporterExcel } from '../../utils/export';
 
@@ -31,33 +32,101 @@ function LigneSetting({
   description?: string;
   children: React.ReactNode;
 }) {
+  const C = useThemeColors();
   return (
-    <View style={stylesL.row}>
-      <View style={stylesL.info}>
-        <Text style={stylesL.label}>{label}</Text>
-        {description && <Text style={stylesL.desc}>{description}</Text>}
+    <View
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingVertical: SPACING.sm,
+        borderBottomWidth: 1,
+        borderBottomColor: C.borderLight,
+      }}
+    >
+      <View style={{ flex: 1, marginRight: SPACING.sm }}>
+        <Text style={{ fontSize: FONT_SIZE.md, fontWeight: FONT_WEIGHT.medium, color: C.text }}>{label}</Text>
+        {description && (
+          <Text style={{ fontSize: FONT_SIZE.xs, color: C.textSecondary, marginTop: 2 }}>{description}</Text>
+        )}
       </View>
       {children}
     </View>
   );
 }
 
-const stylesL = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: SPACING.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: COULEURS.borderLight,
-  },
-  info: { flex: 1, marginRight: SPACING.sm },
-  label: { fontSize: FONT_SIZE.md, fontWeight: FONT_WEIGHT.medium, color: COULEURS.text },
-  desc: { fontSize: FONT_SIZE.xs, color: COULEURS.textSecondary, marginTop: 2 },
-});
+function createSettingsStyles(C: ThemeColors) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: C.background },
+    scroll: { paddingBottom: SPACING.xxl },
+    titre: {
+      fontSize: FONT_SIZE.xxl,
+      fontWeight: FONT_WEIGHT.black,
+      color: C.text,
+      paddingHorizontal: SPACING.md,
+      paddingTop: SPACING.md,
+      marginBottom: SPACING.md,
+    },
+    section: { marginHorizontal: SPACING.md, marginBottom: SPACING.md },
+    sectionTitre: { fontSize: FONT_SIZE.lg, fontWeight: FONT_WEIGHT.bold, color: C.text, marginBottom: SPACING.md },
+    logoSection: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md, marginBottom: SPACING.md },
+    logoCont: { position: 'relative' },
+    logoImg: { width: 72, height: 72, borderRadius: 36, borderWidth: 2, borderColor: C.primary },
+    logoPlaceholder: {
+      width: 72, height: 72, borderRadius: 36,
+      backgroundColor: C.primary + '15',
+      alignItems: 'center', justifyContent: 'center',
+      borderWidth: 2, borderColor: C.primary,
+      borderStyle: 'dashed',
+    },
+    logoPlaceholderTxt: { fontSize: 28 },
+    logoBadge: {
+      position: 'absolute', bottom: 0, right: 0,
+      backgroundColor: C.primary,
+      width: 24, height: 24, borderRadius: 12,
+      alignItems: 'center', justifyContent: 'center',
+    },
+    logoBadgeTxt: { fontSize: 12 },
+    logoInfo: { flex: 1 },
+    logoTitre: { fontSize: FONT_SIZE.md, fontWeight: FONT_WEIGHT.semibold, color: C.text },
+    logoDesc: { fontSize: FONT_SIZE.xs, color: C.textSecondary, marginTop: 4 },
+    logoSuppr: { fontSize: FONT_SIZE.sm, color: C.error, marginTop: 6 },
+    champNom: { marginBottom: SPACING.md },
+    champLabel: { fontSize: FONT_SIZE.sm, fontWeight: FONT_WEIGHT.semibold, color: C.text, marginBottom: 6 },
+    input: {
+      backgroundColor: C.surface,
+      borderWidth: 1.5,
+      borderColor: C.border,
+      borderRadius: BORDER_RADIUS.md,
+      paddingHorizontal: SPACING.md,
+      paddingVertical: 12,
+      fontSize: FONT_SIZE.md,
+      color: C.text,
+    },
+    exportDesc: { fontSize: FONT_SIZE.sm, color: C.textSecondary, lineHeight: 20 },
+    aboutRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      paddingVertical: 8,
+      borderBottomWidth: 1,
+      borderBottomColor: C.borderLight,
+    },
+    aboutLabel: { fontSize: FONT_SIZE.sm, color: C.textSecondary },
+    aboutVal: { fontSize: FONT_SIZE.sm, fontWeight: FONT_WEIGHT.medium, color: C.text },
+    credits: {
+      textAlign: 'center',
+      fontSize: FONT_SIZE.xs,
+      color: C.textLight,
+      paddingHorizontal: SPACING.xl,
+      paddingBottom: SPACING.md,
+    },
+  });
+}
 
 export default function SettingsScreen() {
   const { parametres, chargerParametres, mettreAJourParametres } = useAppStore();
+  const C = useThemeColors();
+  const styles = useMemo(() => createSettingsStyles(C), [C]);
   const [nomChoral, setNomChoral] = useState('');
   const [modeSombre, setModeSombre] = useState(false);
   const [exportLoading, setExportLoading] = useState(false);
@@ -109,7 +178,10 @@ export default function SettingsScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={COULEURS.background} />
+      <StatusBar
+        barStyle={parametres.modeSombre ? 'light-content' : 'dark-content'}
+        backgroundColor={C.background}
+      />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
 
         <Text style={styles.titre}>Paramètres</Text>
@@ -151,7 +223,7 @@ export default function SettingsScreen() {
               value={nomChoral}
               onChangeText={(v) => { setNomChoral(v); setModified(true); }}
               placeholder="ex: Choral de la Cathédrale"
-              placeholderTextColor={COULEURS.textLight}
+              placeholderTextColor={C.textLight}
             />
           </View>
 
@@ -163,8 +235,8 @@ export default function SettingsScreen() {
             <Switch
               value={modeSombre}
               onValueChange={(v) => { setModeSombre(v); setModified(true); }}
-              trackColor={{ false: COULEURS.border, true: COULEURS.primary }}
-              thumbColor={COULEURS.white}
+              trackColor={{ false: C.border, true: C.primary }}
+              thumbColor={C.white}
             />
           </LigneSetting>
 
@@ -222,75 +294,3 @@ export default function SettingsScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COULEURS.background },
-  scroll: { paddingBottom: SPACING.xxl },
-  titre: {
-    fontSize: FONT_SIZE.xxl,
-    fontWeight: FONT_WEIGHT.black,
-    color: COULEURS.text,
-    paddingHorizontal: SPACING.md,
-    paddingTop: SPACING.md,
-    marginBottom: SPACING.md,
-  },
-
-  section: { marginHorizontal: SPACING.md, marginBottom: SPACING.md },
-  sectionTitre: { fontSize: FONT_SIZE.lg, fontWeight: FONT_WEIGHT.bold, color: COULEURS.text, marginBottom: SPACING.md },
-
-  logoSection: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md, marginBottom: SPACING.md },
-  logoCont: { position: 'relative' },
-  logoImg: { width: 72, height: 72, borderRadius: 36, borderWidth: 2, borderColor: COULEURS.primary },
-  logoPlaceholder: {
-    width: 72, height: 72, borderRadius: 36,
-    backgroundColor: COULEURS.primary + '15',
-    alignItems: 'center', justifyContent: 'center',
-    borderWidth: 2, borderColor: COULEURS.primary,
-    borderStyle: 'dashed',
-  },
-  logoPlaceholderTxt: { fontSize: 28 },
-  logoBadge: {
-    position: 'absolute', bottom: 0, right: 0,
-    backgroundColor: COULEURS.primary,
-    width: 24, height: 24, borderRadius: 12,
-    alignItems: 'center', justifyContent: 'center',
-  },
-  logoBadgeTxt: { fontSize: 12 },
-  logoInfo: { flex: 1 },
-  logoTitre: { fontSize: FONT_SIZE.md, fontWeight: FONT_WEIGHT.semibold, color: COULEURS.text },
-  logoDesc: { fontSize: FONT_SIZE.xs, color: COULEURS.textSecondary, marginTop: 4 },
-  logoSuppr: { fontSize: FONT_SIZE.sm, color: COULEURS.error, marginTop: 6 },
-
-  champNom: { marginBottom: SPACING.md },
-  champLabel: { fontSize: FONT_SIZE.sm, fontWeight: FONT_WEIGHT.semibold, color: COULEURS.text, marginBottom: 6 },
-  input: {
-    backgroundColor: COULEURS.background,
-    borderWidth: 1.5,
-    borderColor: COULEURS.border,
-    borderRadius: BORDER_RADIUS.md,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: 12,
-    fontSize: FONT_SIZE.md,
-    color: COULEURS.text,
-  },
-
-  exportDesc: { fontSize: FONT_SIZE.sm, color: COULEURS.textSecondary, lineHeight: 20 },
-
-  aboutRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: COULEURS.borderLight,
-  },
-  aboutLabel: { fontSize: FONT_SIZE.sm, color: COULEURS.textSecondary },
-  aboutVal: { fontSize: FONT_SIZE.sm, fontWeight: FONT_WEIGHT.medium, color: COULEURS.text },
-
-  credits: {
-    textAlign: 'center',
-    fontSize: FONT_SIZE.xs,
-    color: COULEURS.textLight,
-    paddingHorizontal: SPACING.xl,
-    paddingBottom: SPACING.md,
-  },
-});

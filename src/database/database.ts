@@ -54,6 +54,16 @@ export function initDatabase(): void {
       ('modeSombre', 'false'),
       ('couleurPrimaire', '#6C3FC5');
   `);
+  runMigrations();
+}
+
+/** Ajoute les colonnes manquantes sur les bases déjà installées. */
+function runMigrations(): void {
+  const cols = db.getAllSync<{ name: string }>('PRAGMA table_info(sessions)', []);
+  const noms = cols.map((c) => c.name);
+  if (!noms.includes('offrande')) {
+    db.execSync('ALTER TABLE sessions ADD COLUMN offrande REAL NOT NULL DEFAULT 0');
+  }
 }
 
 // ─── MEMBRES ────────────────────────────────────────────────
@@ -177,6 +187,14 @@ export function initialiserPresencesSession(date: string): void {
     INSERT OR IGNORE INTO presences (membreId, date, present)
     SELECT id, '${date}', 0 FROM membres
   `);
+}
+
+/** Enregistre le montant d'offrande pour la session du jour (crée la session si besoin). */
+export function setOffrandeSession(date: string, offrande: number): void {
+  if (!getSessionParDate(date)) {
+    ajouterSession(date);
+  }
+  db.runSync('UPDATE sessions SET offrande = ? WHERE date = ?', [offrande, date]);
 }
 
 // ─── STATISTIQUES ───────────────────────────────────────────

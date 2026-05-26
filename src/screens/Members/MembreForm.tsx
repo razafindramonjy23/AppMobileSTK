@@ -2,7 +2,7 @@
 // ÉCRAN : FORMULAIRE MEMBRE (Ajout / Modification)
 // ============================================================
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -18,7 +18,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useAppStore } from '../../store/useAppStore';
 import { Pupitre } from '../../types';
-import { COULEURS, SPACING, BORDER_RADIUS, FONT_SIZE, FONT_WEIGHT, SHADOWS, PUPITRE_CONFIG } from '../../theme';
+import { SPACING, BORDER_RADIUS, FONT_SIZE, FONT_WEIGHT, SHADOWS, PUPITRE_CONFIG, ThemeColors } from '../../theme';
+import { useThemeColors } from '../../theme/ThemeContext';
 import { Bouton } from '../../components/common';
 import * as DB from '../../database/database';
 
@@ -34,48 +35,100 @@ interface ChampProps {
   erreur?: string;
 }
 
-function Champ({ label, valeur, onChange, placeholder, type = 'default', obligatoire, erreur }: ChampProps) {
+function createChampStyles(C: ThemeColors) {
+  return StyleSheet.create({
+    container: { marginBottom: SPACING.md },
+    label: { fontSize: FONT_SIZE.sm, fontWeight: FONT_WEIGHT.semibold, color: C.text, marginBottom: 6 },
+    input: {
+      backgroundColor: C.card,
+      borderWidth: 1.5,
+      borderColor: C.border,
+      borderRadius: BORDER_RADIUS.md,
+      paddingHorizontal: SPACING.md,
+      paddingVertical: 12,
+      fontSize: FONT_SIZE.md,
+      color: C.text,
+    },
+    erreur: { color: C.error, fontSize: FONT_SIZE.xs, marginTop: 4 },
+  });
+}
+
+function Champ({
+  label,
+  valeur,
+  onChange,
+  placeholder,
+  type = 'default',
+  obligatoire,
+  erreur,
+}: ChampProps) {
+  const C = useThemeColors();
+  const st = useMemo(() => createChampStyles(C), [C]);
   return (
-    <View style={stylesChamp.container}>
-      <Text style={stylesChamp.label}>
-        {label} {obligatoire && <Text style={stylesChamp.obligatoire}>*</Text>}
+    <View style={st.container}>
+      <Text style={st.label}>
+        {label} {obligatoire && <Text style={{ color: C.error }}>*</Text>}
       </Text>
       <TextInput
-        style={[stylesChamp.input, erreur ? stylesChamp.inputErreur : null]}
+        style={[st.input, erreur ? { borderColor: C.error } : null]}
         value={valeur}
         onChangeText={onChange}
         placeholder={placeholder}
-        placeholderTextColor={COULEURS.textLight}
+        placeholderTextColor={C.textLight}
         keyboardType={type}
         autoCapitalize={type === 'default' ? 'words' : 'none'}
       />
-      {erreur ? <Text style={stylesChamp.erreur}>{erreur}</Text> : null}
+      {erreur ? <Text style={st.erreur}>{erreur}</Text> : null}
     </View>
   );
 }
 
-const stylesChamp = StyleSheet.create({
-  container: { marginBottom: SPACING.md },
-  label: { fontSize: FONT_SIZE.sm, fontWeight: FONT_WEIGHT.semibold, color: COULEURS.text, marginBottom: 6 },
-  obligatoire: { color: COULEURS.error },
-  input: {
-    backgroundColor: COULEURS.card,
-    borderWidth: 1.5,
-    borderColor: COULEURS.border,
-    borderRadius: BORDER_RADIUS.md,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: 12,
-    fontSize: FONT_SIZE.md,
-    color: COULEURS.text,
-  },
-  inputErreur: { borderColor: COULEURS.error },
-  erreur: { color: COULEURS.error, fontSize: FONT_SIZE.xs, marginTop: 4 },
-});
+function createMembreFormStyles(C: ThemeColors) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: C.background },
+    scroll: { paddingBottom: SPACING.xxl },
+    header: {
+      paddingHorizontal: SPACING.md,
+      paddingTop: SPACING.md,
+      paddingBottom: SPACING.lg,
+    },
+    btnRetour: { marginBottom: SPACING.sm },
+    btnRetourTxt: { fontSize: FONT_SIZE.md, color: C.primary, fontWeight: FONT_WEIGHT.medium },
+    titre: { fontSize: FONT_SIZE.xxl, fontWeight: FONT_WEIGHT.black, color: C.text },
+    form: { paddingHorizontal: SPACING.md },
+    pupitreSection: { marginBottom: SPACING.md },
+    pupitreLabel: { fontSize: FONT_SIZE.sm, fontWeight: FONT_WEIGHT.semibold, color: C.text, marginBottom: 10 },
+    pupitreGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+    pupitreBtn: {
+      flex: 1,
+      minWidth: '45%',
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 8,
+      paddingVertical: 14,
+      borderRadius: BORDER_RADIUS.md,
+      borderWidth: 2,
+      backgroundColor: C.card,
+      ...SHADOWS.sm,
+    },
+    pupitreEmoji: { fontSize: 20 },
+    pupitreBtnTxt: { fontSize: FONT_SIZE.md, fontWeight: FONT_WEIGHT.bold },
+    boutons: {
+      flexDirection: 'row',
+      gap: SPACING.sm,
+      paddingHorizontal: SPACING.md,
+      marginTop: SPACING.lg,
+    },
+  });
+}
 
 export default function MembreForm() {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
   const { ajouterMembre, modifierMembre } = useAppStore();
+  const C = useThemeColors();
+  const styles = useMemo(() => createMembreFormStyles(C), [C]);
 
   const membreId: number | undefined = route.params?.membreId;
   const isModif = Boolean(membreId);
@@ -182,7 +235,7 @@ export default function MembreForm() {
 
             {/* Sélection Pupitre */}
             <View style={styles.pupitreSection}>
-              <Text style={styles.pupitreLabel}>Pupitre <Text style={{ color: COULEURS.error }}>*</Text></Text>
+              <Text style={styles.pupitreLabel}>Pupitre <Text style={{ color: C.error }}>*</Text></Text>
               <View style={styles.pupitreGrid}>
                 {PUPITRES.map((p) => {
                   const config = PUPITRE_CONFIG[p];
@@ -203,7 +256,7 @@ export default function MembreForm() {
                       </Text>
                       <Text style={[
                         styles.pupitreBtnTxt,
-                        { color: actif ? COULEURS.white : config.couleur },
+                        { color: actif ? C.white : config.couleur },
                       ]}>
                         {config.label}
                       </Text>
@@ -234,44 +287,3 @@ export default function MembreForm() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COULEURS.background },
-  scroll: { paddingBottom: SPACING.xxl },
-  header: {
-    paddingHorizontal: SPACING.md,
-    paddingTop: SPACING.md,
-    paddingBottom: SPACING.lg,
-  },
-  btnRetour: { marginBottom: SPACING.sm },
-  btnRetourTxt: { fontSize: FONT_SIZE.md, color: COULEURS.primary, fontWeight: FONT_WEIGHT.medium },
-  titre: { fontSize: FONT_SIZE.xxl, fontWeight: FONT_WEIGHT.black, color: COULEURS.text },
-
-  form: { paddingHorizontal: SPACING.md },
-
-  pupitreSection: { marginBottom: SPACING.md },
-  pupitreLabel: { fontSize: FONT_SIZE.sm, fontWeight: FONT_WEIGHT.semibold, color: COULEURS.text, marginBottom: 10 },
-  pupitreGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  pupitreBtn: {
-    flex: 1,
-    minWidth: '45%',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 14,
-    borderRadius: BORDER_RADIUS.md,
-    borderWidth: 2,
-    backgroundColor: COULEURS.card,
-    ...SHADOWS.sm,
-  },
-  pupitreEmoji: { fontSize: 20 },
-  pupitreBtnTxt: { fontSize: FONT_SIZE.md, fontWeight: FONT_WEIGHT.bold },
-
-  boutons: {
-    flexDirection: 'row',
-    gap: SPACING.sm,
-    paddingHorizontal: SPACING.md,
-    marginTop: SPACING.lg,
-  },
-});
